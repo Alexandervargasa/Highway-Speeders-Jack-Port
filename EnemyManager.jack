@@ -1,0 +1,155 @@
+class EnemyManager {
+    field Array enemies;
+    field int maxEnemies;
+    field int spawnCounter;
+    field int spawnInterval;
+    field Array justPassed;  // Para rastrear enemigos que acaban de ser pasados
+    
+    constructor EnemyManager new() {
+        var int i;
+        let maxEnemies = 4;  // 4 enemigos simultáneos
+        let enemies = Array.new(maxEnemies);
+        let justPassed = Array.new(maxEnemies);
+        let spawnCounter = 0;
+        let spawnInterval = 60;  // Cambiado de 30 a 60 - spawn cada ~3 segundos
+        
+        // Crear enemigos en diferentes carriles
+        let i = 0;
+        while (i < maxEnemies) {
+            let enemies[i] = Enemy.new(i);
+            let justPassed[i] = false;
+            let i = i + 1;
+        }
+        
+        return this;
+    }
+    
+    method void update(int playerSpeed) {
+        var int i;
+        var Enemy enemy;
+        var int inactiveLane;
+        var boolean foundInactive;
+        
+        // Actualizar todos los enemigos
+        let i = 0;
+        while (i < maxEnemies) {
+            let enemy = enemies[i];
+            do enemy.update(playerSpeed);
+            let i = i + 1;
+        }
+        
+        // Sistema de spawn
+        let spawnCounter = spawnCounter + 1;
+        if (spawnCounter > spawnInterval) {
+            let spawnCounter = 0;
+            
+            // Buscar un enemigo inactivo para reactivar
+            let foundInactive = false;
+            let i = 0;
+            while ((i < maxEnemies) & (~foundInactive)) {
+                let enemy = enemies[i];
+                if (~enemy.isActive()) {
+                    // Cambiar carril aleatoriamente (rotación simple)
+                    let inactiveLane = (enemy.getLane() + 1) & 3;
+                    do enemy.setLane(inactiveLane);
+                    do enemy.spawn();
+                    let foundInactive = true;
+                }
+                let i = i + 1;
+            }
+        }
+        
+        return;
+    }
+    
+    method void draw() {
+        var int i;
+        var Enemy enemy;
+        
+        let i = 0;
+        while (i < maxEnemies) {
+            let enemy = enemies[i];
+            do enemy.draw();
+            let i = i + 1;
+        }
+        
+        return;
+    }
+    
+    method void erase() {
+        var int i;
+        var Enemy enemy;
+        
+        let i = 0;
+        while (i < maxEnemies) {
+            let enemy = enemies[i];
+            do enemy.erase();
+            let i = i + 1;
+        }
+        
+        return;
+    }
+    
+    method int checkOvertakes(int playerY) {
+        var int i;
+        var Enemy enemy;
+        var int passedCount;
+        var boolean wasActive;
+        
+        let passedCount = 0;
+        let i = 0;
+        
+        while (i < maxEnemies) {
+            let enemy = enemies[i];
+            let wasActive = justPassed[i];
+            
+            // Si el enemigo acabó de salir por abajo (fue pasado)
+            if ((~enemy.isActive()) & enemy.wasOvertaken() & (~wasActive)) {
+                let passedCount = passedCount + 1;
+                let justPassed[i] = true;  // Marcar para no contar doble
+            }
+            
+            // Si el enemigo está activo de nuevo, resetear el flag
+            if (enemy.isActive()) {
+                let justPassed[i] = false;
+            }
+            
+            let i = i + 1;
+        }
+        
+        return passedCount;
+    }
+    
+    method boolean checkCollisions(int px, int py, int pw, int ph) {
+        var int i;
+        var Enemy enemy;
+        
+        let i = 0;
+        while (i < maxEnemies) {
+            let enemy = enemies[i];
+            if (enemy.checkCollision(px, py, pw, ph)) {
+                return true;
+            }
+            let i = i + 1;
+        }
+        
+        return false;
+    }
+    
+    method void dispose() {
+        var int i;
+        var Enemy enemy;
+        
+        let i = 0;
+        while (i < maxEnemies) {
+            let enemy = enemies[i];
+            do enemy.dispose();
+            let i = i + 1;
+        }
+        
+        do enemies.dispose();
+        do justPassed.dispose();
+        do Memory.deAlloc(this);
+        return;
+    }
+}

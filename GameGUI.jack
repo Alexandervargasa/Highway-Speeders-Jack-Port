@@ -1,0 +1,173 @@
+class GameGUI {
+    field int score;
+    field int time;
+    field int barY;
+    field int barHeight;
+    field int fuel;
+    field int maxFuel;
+    
+    constructor GameGUI new() {
+        let score = 0;
+        let time = 0;
+        let barY = 235;
+        let barHeight = 21;
+        let maxFuel = 100;  // Cambiado de 1000 a 100 para cálculos más simples
+        let fuel = 100;     // Iniciar en 100
+        return this;
+    }
+    
+    method void drawBar() {
+        // Dibujar solo una línea negra como separador (2 pixeles de alto)
+        do Screen.setColor(true);
+        do Screen.drawRectangle(0, barY, 511, barY + 1);
+        
+        // Borrar el área de texto (fondo blanco)
+        do Screen.setColor(false);
+        do Screen.drawRectangle(0, barY + 2, 511, 255);
+        
+        // Dibujar etiquetas fijas solo una vez
+        do Screen.setColor(true);
+        do Output.moveCursor(22, 2);
+        do Output.printString("TIME:");
+        
+        do Output.moveCursor(22, 45);
+        do Output.printString("SCORE:");
+        
+        // Dibujar valores iniciales
+        do refreshTime();
+        do refreshFuel();
+        do refreshScore();
+        
+        return;
+    }
+    
+    method void refreshTime() {
+        // Borrar solo el área del número de tiempo
+        do Screen.setColor(false);
+        do Screen.drawRectangle(56, barY + 2, 150, 255);
+        
+        // Imprimir nuevo valor
+        do Screen.setColor(true);
+        do Output.moveCursor(22, 8);
+        do Output.printInt(time);
+        
+        return;
+    }
+    
+    method void refreshFuel() {
+        var int fuelBarWidth, fuelBarX, fuelBarY, fuelFill;
+        
+        // Barra de combustible visual
+        let fuelBarX = 200;
+        let fuelBarY = barY + 6;
+        let fuelBarWidth = 100;  // Aumentado de 80 a 100
+        
+        // Borrar área completa
+        do Screen.setColor(false);
+        do Screen.drawRectangle(145, barY + 2, fuelBarX + fuelBarWidth + 10, 255);
+        
+        // Texto "FUEL:" junto a la barra
+        do Screen.setColor(true);
+        do Output.moveCursor(22, 20);
+        do Output.printString("FUEL:");
+        
+        // Marco de la barra
+        do Screen.setColor(true);
+        do Screen.drawRectangle(fuelBarX, fuelBarY, fuelBarX + fuelBarWidth, fuelBarY + 10);
+        
+        // Interior vacío
+        do Screen.setColor(false);
+        do Screen.drawRectangle(fuelBarX + 1, fuelBarY + 1, fuelBarX + fuelBarWidth - 1, fuelBarY + 9);
+        
+        // Llenar según combustible (asegurar que no sea negativo)
+        if (fuel > 0) {
+            let fuelFill = (fuel * (fuelBarWidth - 2)) / maxFuel;
+            if (fuelFill > (fuelBarWidth - 2)) {
+                let fuelFill = fuelBarWidth - 2;
+            }
+            if (fuelFill > 0) {
+                do Screen.setColor(true);
+                do Screen.drawRectangle(fuelBarX + 1, fuelBarY + 1, 
+                                       fuelBarX + 1 + fuelFill, fuelBarY + 9);
+            }
+        }
+        
+        return;
+    }
+    
+    method void refreshScore() {
+        // Borrar solo el área del número de score
+        do Screen.setColor(false);
+        do Screen.drawRectangle(416, barY + 2, 511, 255);
+        
+        // Imprimir nuevo valor
+        do Screen.setColor(true);
+        do Output.moveCursor(22, 52);
+        do Output.printInt(score);
+        
+        return;
+    }
+    
+    method void updateTime(int newTime) {
+        let time = newTime;
+        do refreshTime();
+        return;
+    }
+    
+    method void updateScore(int newScore) {
+        let score = newScore;
+        do refreshScore();
+        return;
+    }
+    
+    method void addScore(int points) {
+        // Protección contra overflow (max 30000 para dejar margen)
+        if ((score + points) < 30000) {
+            let score = score + points;
+        }
+        do refreshScore();
+        return;
+    }
+    
+    method int getScore() {
+        return score;
+    }
+    
+    method int getTime() {
+        return time;
+    }
+    
+    method int getFuel() {
+        return fuel;
+    }
+
+    method boolean isFuelEmpty() {
+    if (fuel < 1) {
+        return true;
+    }
+    return false;
+}
+    
+    method void consumeFuel(int amount) {
+        let fuel = fuel - amount;
+        if (fuel < 0) {
+            let fuel = 0;
+        }
+        do refreshFuel();
+        return;
+    }
+    
+    method void addFuel(int amount) {
+        let fuel = fuel + amount;
+        if (fuel > maxFuel) {
+            let fuel = maxFuel;
+        }
+        do refreshFuel();
+        return;
+    }
+    
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

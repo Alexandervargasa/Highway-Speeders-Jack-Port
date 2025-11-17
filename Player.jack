@@ -1,0 +1,188 @@
+class Player {
+    field int x, y;
+    field int width, height;
+    field int speed;
+    field int minSpeed, maxSpeed;
+    field int minX, maxX;
+    field int minY, maxY;
+    field boolean nitroActive;
+    field int nitroSpeed;
+    
+    constructor Player new(int startX, int startY) {
+        let x = startX;
+        let y = startY;
+        let width = 20;
+        let height = 30;
+        
+        let minSpeed = 2;
+        let maxSpeed = 8;
+        let speed = minSpeed;
+        let nitroSpeed = 12;  // Velocidad con nitro
+        let nitroActive = false;
+        
+        let minX = 155;
+        let maxX = 365;
+        let minY = 50;
+        let maxY = 220;
+        
+        return this;
+    }
+    
+    method void update(char key) {
+        var boolean leftPressed, rightPressed, upPressed, downPressed, spacePressed;
+        
+        // Detectar qué teclas están presionadas
+        let leftPressed = false;
+        let rightPressed = false;
+        let upPressed = false;
+        let downPressed = false;
+        let spacePressed = false;
+        
+        if (key = 130) { let leftPressed = true; }
+        if (key = 132) { let rightPressed = true; }
+        if (key = 131) { let upPressed = true; }
+        if (key = 133) { let downPressed = true; }
+        if (key = 32) { let spacePressed = true; }  // SPACE para nitro
+        
+        // Activar/desactivar nitro
+        let nitroActive = spacePressed;
+        
+        // Procesar movimiento izquierda (más rápido con nitro)
+        if (leftPressed) {
+            if (x > minX) {
+                if (nitroActive) {
+                    let x = x - 6;  // Más rápido con nitro
+                } else {
+                    let x = x - 4;
+                }
+            }
+        }
+        
+        // Procesar movimiento derecha (más rápido con nitro)
+        if (rightPressed) {
+            if (x < (maxX - width)) {
+                if (nitroActive) {
+                    let x = x + 6;  // Más rápido con nitro
+                } else {
+                    let x = x + 4;
+                }
+            }
+        }
+        
+        // Procesar aceleración
+        if (upPressed) {
+            if (speed < maxSpeed) {
+                let speed = speed + 1;
+            }
+        }
+        
+        // Procesar freno (no se puede frenar con nitro activo)
+        if (downPressed) {
+            if (~nitroActive) {
+                if (speed > minSpeed) {
+                    let speed = speed - 1;
+                }
+            }
+        }
+        
+        // Actualizar posición Y basado en velocidad (perspectiva)
+        if (nitroActive) {
+            let y = minY + (((maxY - minY) * (nitroSpeed - speed)) / nitroSpeed);
+        } else {
+            let y = minY + (((maxY - minY) * (maxSpeed - speed)) / maxSpeed);
+        }
+        
+        return;
+    }
+    
+    method void draw() {
+        do Screen.setColor(true);
+        do Screen.drawRectangle(x, y, x + width, y + height);
+        
+        // Ventana del auto
+        do Screen.setColor(false);
+        do Screen.drawRectangle(x + 5, y + 5, x + 15, y + 12);
+        
+        return;
+    }
+    
+    method void drawSpeedBar() {
+        var int barX, barY, barWidth, barHeight, speedHeight, effectiveSpeed;
+        let barX = 10;
+        let barY = 10;
+        let barWidth = 20;
+        let barHeight = 100;
+        
+        // Marco de la barra
+        do Screen.setColor(true);
+        do Screen.drawRectangle(barX, barY, barX + barWidth, barY + barHeight);
+        
+        // Interior vacío
+        do Screen.setColor(false);
+        do Screen.drawRectangle(barX + 1, barY + 1, barX + barWidth - 1, barY + barHeight - 1);
+        
+        // Calcular velocidad efectiva (con o sin nitro)
+        if (nitroActive) {
+            let effectiveSpeed = nitroSpeed;
+        } else {
+            let effectiveSpeed = speed;
+        }
+        
+        // Llenar según velocidad
+        if (effectiveSpeed > 0) {
+            do Screen.setColor(true);
+            let speedHeight = (effectiveSpeed * barHeight) / nitroSpeed;
+            if (speedHeight > (barHeight - 2)) {
+                let speedHeight = barHeight - 2;
+            }
+            if (speedHeight > 0) {
+                do Screen.drawRectangle(barX + 1, barY + barHeight - speedHeight, 
+                                        barX + barWidth - 1, barY + barHeight - 1);
+            }
+        }
+
+        // Texto "Speed" o "NITRO!" debajo de la barra
+        do Output.moveCursor(11, 0);
+        if (nitroActive) {
+            do Output.printString("NITRO");
+        } else {
+            do Output.printString("Speed");
+        }
+        
+        return;
+    }
+    
+    method int getX() { return x; }
+    method int getY() { return y; }
+    method int getWidth() { return width; }
+    method int getHeight() { return height; }
+    
+    method int getSpeed() { 
+        if (nitroActive) {
+            return nitroSpeed;
+        }
+        return speed; 
+    }
+    
+    method boolean isNitroActive() {
+        return nitroActive;
+    }
+    
+    method boolean checkCollision(int otherX, int otherY, int otherW, int otherH) {
+        if (x < (otherX + otherW)) {
+            if ((x + width) > otherX) {
+                if (y < (otherY + otherH)) {
+                    if ((y + height) > otherY) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

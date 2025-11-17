@@ -1,0 +1,130 @@
+class FuelPowerup {
+    field int x, y;
+    field int width, height;
+    field boolean active;
+    field int lane;
+    
+    constructor FuelPowerup new() {
+        let width = 16;
+        let height = 16;
+        let active = false;
+        let lane = 0;
+        return this;
+    }
+    
+    method void spawn(int spawnLane) {
+        var int randomOffset;
+        
+        let lane = spawnLane;
+        
+        // Base X del carril
+        if (lane = 0) {
+            let x = 160;
+        }
+        if (lane = 1) {
+            let x = 220;
+        }
+        if (lane = 2) {
+            let x = 280;
+        }
+        if (lane = 3) {
+            let x = 340;
+        }
+        
+        // Agregar variación aleatoria dentro del carril (±10 pixels)
+        // Usar lane y y como "semilla" pseudo-aleatoria
+        let randomOffset = (lane * 7 + spawnLane * 3) & 15;  // Valor entre 0-15
+        let randomOffset = randomOffset - 7;  // Valor entre -7 y +8
+        let x = x + randomOffset;
+        
+        // Asegurar que no se salga de los límites de la carretera
+        if (x < 155) {
+            let x = 155;
+        }
+        if (x > 354) {
+            let x = 354;
+        }
+        
+        let y = -20;
+        let active = true;
+        return;
+    }
+    
+    method void update(int playerSpeed) {
+        if (~active) {
+            return;
+        }
+        
+        // Mover hacia abajo según velocidad del jugador
+        let y = y + playerSpeed;
+        
+        // Desactivar si sale de pantalla
+        if (y > 240) {
+            let active = false;
+        }
+        
+        return;
+    }
+    
+    method void draw() {
+        if (~active) {
+            return;
+        }
+        
+        // No dibujar si está fuera del área visible
+        if ((y < 0) | (y > 234)) {
+            return;
+        }
+        
+        // Dibujar bidón de combustible (rectángulo con detalles)
+        do Screen.setColor(true);
+        do Screen.drawRectangle(x, y, x + width, y + height);
+        
+        // Detalles internos (para que se vea como bidón)
+        do Screen.setColor(false);
+        do Screen.drawRectangle(x + 3, y + 3, x + width - 3, y + 6);
+        do Screen.drawRectangle(x + 5, y + 8, x + width - 5, y + height - 3);
+        
+        // Letra "F" de fuel
+        do Screen.setColor(true);
+        do Screen.drawRectangle(x + 6, y + 9, x + 7, y + height - 4);
+        do Screen.drawRectangle(x + 6, y + 9, x + 10, y + 10);
+        do Screen.drawRectangle(x + 6, y + 11, x + 9, y + 12);
+        
+        return;
+    }
+    
+    method boolean checkCollision(int px, int py, int pw, int ph) {
+        if (~active) {
+            return false;
+        }
+        
+        if (px < (x + width)) {
+            if ((px + pw) > x) {
+                if (py < (y + height)) {
+                    if ((py + ph) > y) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    method void collect() {
+        let active = false;
+        return;
+    }
+    
+    method boolean isActive() {
+        return active;
+    }
+    
+    method int getX() { return x; }
+    method int getY() { return y; }
+    
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

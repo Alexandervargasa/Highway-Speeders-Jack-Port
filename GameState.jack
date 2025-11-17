@@ -1,0 +1,113 @@
+class GameState {
+    field int state;  // 0=MENU, 1=PLAYING, 2=GAMEOVER
+    field String gameOverReason;
+    field int finalScore;
+    
+    constructor GameState new() {
+        let state = 0;  // Empezar en MENU
+        let gameOverReason = "";
+        let finalScore = 0;
+        return this;
+    }
+    
+    method void drawMenu() {
+        do Screen.clearScreen();
+        
+        // Título grande
+        do Output.moveCursor(5, 20);
+        do Output.printString("Highway Speeders");
+        
+        // Subtítulo
+        do Output.moveCursor(7, 22);
+        do Output.printString("JACK EDITION");
+        
+        // Instrucciones
+        do Output.moveCursor(10, 18);
+        do Output.printString("ARROW KEYS - Move");
+        
+        do Output.moveCursor(11, 18);
+        do Output.printString("UP/DOWN - Accelerate");
+        
+        do Output.moveCursor(12, 18);
+        do Output.printString("SPACE - Nitro Boost");
+        
+        do Output.moveCursor(14, 18);
+        do Output.printString("ESC - Quit Game");
+        
+        // Prompt para iniciar
+        do Output.moveCursor(18, 15);
+        do Output.printString("Press ENTER to Start!");
+        
+        return;
+    }
+    
+    method void drawGameOver(int score, String reason) {
+        var int centerX, centerY;
+        
+        let centerX = 20;
+        let centerY = 8;
+        
+        // Caja de Game Over (más ancha y alta)
+        do Screen.setColor(true);
+        do Screen.drawRectangle(100, 50, 410, 190);
+        do Screen.setColor(false);
+        do Screen.drawRectangle(102, 52, 408, 188);
+        
+        // Texto GAME OVER
+        do Screen.setColor(true);
+        do Output.moveCursor(centerY, centerX);
+        do Output.printString("GAME OVER!");
+        
+        // Razón
+        do Output.moveCursor(centerY + 2, centerX - 2);
+        do Output.printString(reason);
+        
+        // Score final
+        do Output.moveCursor(centerY + 4, centerX);
+        do Output.printString("FINAL SCORE: ");
+        do Output.printInt(score);
+        
+        // Instrucciones
+        do Output.moveCursor(centerY + 7, centerX - 3);
+        do Output.printString("Press R - Restart");
+        
+        do Output.moveCursor(centerY + 8, centerX - 3);
+        do Output.printString("Press BackSpace - Menu");
+        
+        return;
+    }
+    
+    method int getState() {
+        return state;
+    }
+    
+    method void setState(int newState) {
+        let state = newState;
+        return;
+    }
+    
+    method void setGameOver(int score, String reason) {
+        let state = 2;
+        let finalScore = score;
+        let gameOverReason = reason;
+        do drawGameOver(score, reason);
+        return;
+    }
+    
+    method boolean isMenu() {
+        return state = 0;
+    }
+    
+    method boolean isPlaying() {
+        return state = 1;
+    }
+    
+    method boolean isGameOver() {
+        return state = 2;
+    }
+    
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

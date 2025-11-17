@@ -1,0 +1,175 @@
+class Enemy {
+    field int x, y;
+    field int width, height;
+    field int speed;
+    field int lane;  // 0=izquierda, 1=centro-izq, 2=centro-der, 3=derecha
+    field boolean active;
+    field int color;  // Para variar colores
+    field boolean overtaken;  // Para marcar si ya fue adelantado
+    
+    constructor Enemy new(int startLane) {
+        let width = 18;
+        let height = 28;
+        let lane = startLane;
+        let active = false;
+        let color = 1;  // Negro por defecto
+        let overtaken = false;
+        do spawn();
+        return this;
+    }
+    
+    method void spawn() {
+        // Posicionar en el carril correspondiente
+        if (lane = 0) {
+            let x = 160;
+        }
+        if (lane = 1) {
+            let x = 220;
+        }
+        if (lane = 2) {
+            let x = 280;
+        }
+        if (lane = 3) {
+            let x = 340;
+        }
+        
+        // Aparecer arriba de la pantalla (pero no tanto que cause problemas)
+        let y = -30;
+        
+        // Velocidad aleatoria (simulada)
+        let speed = 2 + (lane & 3);  // Entre 2 y 5
+        
+        let active = true;
+        let overtaken = false;  // Resetear el flag de adelantamiento
+        return;
+    }
+    
+    method void update(int playerSpeed) {
+        var int relativeSpeed;
+        
+        if (~active) {
+            return;
+        }
+        
+        // Velocidad relativa al jugador
+        let relativeSpeed = playerSpeed - speed;
+        
+        // Si el jugador va más rápido, el enemigo "retrocede"
+        // Si el jugador va más lento, el enemigo "avanza"
+        let y = y + relativeSpeed;
+        
+        // Desactivar si sale de la pantalla
+        if (y > 240) {
+            let active = false;
+            let overtaken = true;  // Marcar como "pasado" si salió por abajo
+        }
+        if (y < -50) {
+            let active = false;
+            let overtaken = false;  // No contar si salió por arriba
+        }
+        
+        return;
+    }
+    
+    method void draw() {
+        if (~active) {
+            return;
+        }
+        
+        // No dibujar si está fuera de la pantalla visible
+        if ((y < 0) | (y > 234)) {
+            return;
+        }
+        
+        // Verificar que no se salga por abajo
+        if ((y + height) > 234) {
+            return;
+        }
+        
+        // Cuerpo del auto enemigo
+        do Screen.setColor(true);
+        do Screen.drawRectangle(x, y, x + width, y + height);
+        
+        // Ventana
+        do Screen.setColor(false);
+        do Screen.drawRectangle(x + 4, y + height - 10, x + width - 4, y + height - 4);
+        
+        // Detalles (faros o parachoques)
+        do Screen.setColor(false);
+        do Screen.drawRectangle(x + 2, y + 2, x + 6, y + 4);
+        do Screen.drawRectangle(x + width - 6, y + 2, x + width - 2, y + 4);
+        
+        return;
+    }
+    
+    method void erase() {
+        if (~active) {
+            return;
+        }
+        
+        // No borrar si está fuera de la pantalla visible
+        if ((y < 0) | (y > 234)) {
+            return;
+        }
+        
+        // Verificar que no se salga por abajo
+        if ((y + height) > 234) {
+            return;
+        }
+        
+        do Screen.setColor(false);
+        do Screen.drawRectangle(x, y, x + width, y + height);
+        return;
+    }
+    
+    method boolean checkCollision(int px, int py, int pw, int ph) {
+        if (~active) {
+            return false;
+        }
+        
+        if (px < (x + width)) {
+            if ((px + pw) > x) {
+                if (py < (y + height)) {
+                    if ((py + ph) > y) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    method boolean isActive() {
+        return active;
+    }
+    
+    method void setActive(boolean value) {
+        let active = value;
+        return;
+    }
+    
+    method int getX() { return x; }
+    method int getY() { return y; }
+    method int getWidth() { return width; }
+    method int getHeight() { return height; }
+    method int getLane() { return lane; }
+    
+    method boolean wasOvertaken() { 
+        return overtaken; 
+    }
+    
+    method void markOvertaken() {
+        let overtaken = true;
+        return;
+    }
+    
+    method void setLane(int newLane) {
+        let lane = newLane;
+        return;
+    }
+    
+    method void dispose() {
+        do Memory.deAlloc(this);
+        return;
+    }
+}

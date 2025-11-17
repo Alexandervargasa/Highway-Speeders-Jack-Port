@@ -1,0 +1,236 @@
+class Main {
+    function void main() {
+        var GameState gameState;
+        var Player player;
+        var Road road;
+        var GameGUI gui;
+        var EnemyManager enemyManager;
+        var FuelPowerup fuelPowerup;
+        var char key;
+        var boolean exit;
+        var int frameCount;
+        var boolean collision;
+        var int overtakes;
+        var int distancePoints;
+        var int fuelConsumption;
+        var int powerupSpawnCounter;
+        var int lastPowerupLane;
+        var boolean gameInitialized;
+        
+        let gameState = GameState.new();
+        let exit = false;
+        let gameInitialized = false;
+        
+        // Mostrar menú inicial
+        do gameState.drawMenu();
+        
+        while (~exit) {
+            let key = Keyboard.keyPressed();
+            
+            // ===== ESTADO: MENU =====
+            if (gameState.isMenu()) {
+                if (key = 128) {  // ENTER para empezar
+                    do gameState.setState(1);  // Cambiar a PLAYING
+                    
+                    // Inicializar juego
+                    let player = Player.new(260, 200);
+                    let road = Road.new();
+                    let gui = GameGUI.new();
+                    let enemyManager = EnemyManager.new();
+                    let fuelPowerup = FuelPowerup.new();
+                    let frameCount = 0;
+                    let powerupSpawnCounter = 0;
+                    let lastPowerupLane = 0;
+                    let gameInitialized = true;
+                    
+                    // Dibujo inicial
+                    do Screen.clearScreen();
+                    do road.draw();
+                    do player.draw();
+                    do gui.drawBar();
+                }
+                
+                if (key = 140) {  // ESC para salir
+                    let exit = true;
+                }
+            }
+            
+            // ===== ESTADO: PLAYING =====
+            if (gameState.isPlaying()) {
+                // Salir con ESC
+                if (key = 140) {
+                    let exit = true;
+                }
+                
+                // Borrar jugador anterior
+                do Screen.setColor(false);
+                do Screen.drawRectangle(player.getX(), player.getY(), 
+                                       player.getX() + player.getWidth(), 
+                                       player.getY() + player.getHeight());
+                
+                // Actualizar jugador
+                do player.update(key);
+                
+                // Actualizar carretera
+                do road.update(player.getSpeed());
+                
+                // Actualizar enemigos
+                do enemyManager.update(player.getSpeed());
+                
+                // Actualizar power-up de combustible
+                do fuelPowerup.update(player.getSpeed());
+                
+                // Redibujar solo la carretera (sin tocar el GUI)
+                do Screen.setColor(false);
+                do Screen.drawRectangle(150, 0, 370, 234);
+                do road.draw();
+                
+                // Dibujar enemigos
+                do enemyManager.draw();
+                
+                // Dibujar power-up
+                do fuelPowerup.draw();
+                
+                // Dibujar jugador en nueva posición
+                do player.draw();
+                
+                // Dibujar barra de velocidad
+                do player.drawSpeedBar();
+                
+                // ===== SISTEMA DE COMBUSTIBLE =====
+                
+                // Consumo de combustible según velocidad
+                if ((frameCount & 19) = 0) {
+                    let fuelConsumption = player.getSpeed() / 4;
+                    if (fuelConsumption < 1) {
+                        let fuelConsumption = 1;
+                    }
+                    
+                    // Si el nitro está activo, consumir x3
+                    if (player.isNitroActive()) {
+                        let fuelConsumption = fuelConsumption * 3;
+                    }
+                    
+                    do gui.consumeFuel(fuelConsumption);
+                }
+                
+                // Spawn de power-up de combustible
+                let powerupSpawnCounter = powerupSpawnCounter + 1;
+                if (powerupSpawnCounter > (160 + ((gui.getScore() & 63) + (gui.getTime() & 15)))) {
+                    if (~fuelPowerup.isActive()) {
+                        let lastPowerupLane = ((gui.getTime() * 7) + (gui.getScore() / 10) + powerupSpawnCounter) & 3;
+                        do fuelPowerup.spawn(lastPowerupLane);
+                        let powerupSpawnCounter = 0;
+                    }
+                }
+                
+                // Detectar colisión con power-up
+                if (fuelPowerup.checkCollision(player.getX(), player.getY(), 
+                                               player.getWidth(), player.getHeight())) {
+                    do fuelPowerup.collect();
+                    do gui.addFuel(40);
+                    do gui.addScore(50);
+                }
+                
+                // Game Over por falta de combustible
+                if (gui.isFuelEmpty()) {
+                    do gameState.setGameOver(gui.getScore(), "OUT OF FUEL!");
+                }
+                
+                // ===== SISTEMA DE PUNTOS =====
+                
+                // Puntos por distancia
+                if (frameCount = 0) {
+                    let distancePoints = player.getSpeed() * 3;
+                    do gui.addScore(distancePoints);
+                }
+                
+                // Detectar autos que salieron de pantalla
+                let overtakes = enemyManager.checkOvertakes(player.getY());
+                if (overtakes > 0) {
+                    do gui.addScore(overtakes * 20);
+                }
+                
+                // Actualizar contador de frames
+                let frameCount = frameCount + 1;
+                
+                // Actualizar tiempo cada ~20 frames
+                if (frameCount > 19) {
+                    do gui.updateTime(gui.getTime() + 1);
+                    let frameCount = 0;
+                }
+                
+                // Detectar colisiones
+                let collision = enemyManager.checkCollisions(
+                    player.getX(), player.getY(), 
+                    player.getWidth(), player.getHeight()
+                );
+                
+                if (collision) {
+                    do gameState.setGameOver(gui.getScore(), "CRASH!");
+                }
+                
+                // Pequeño delay
+                do Sys.wait(50);
+            }
+            
+            // ===== ESTADO: GAMEOVER =====
+            if (gameState.isGameOver()) {
+                if (key = 82) {  // R para reiniciar
+                    // Limpiar objetos anteriores
+                    if (gameInitialized) {
+                        do player.dispose();
+                        do gui.dispose();
+                        do road.dispose();
+                        do enemyManager.dispose();
+                        do fuelPowerup.dispose();
+                    }
+                    
+                    // Reiniciar juego
+                    let player = Player.new(260, 200);
+                    let road = Road.new();
+                    let gui = GameGUI.new();
+                    let enemyManager = EnemyManager.new();
+                    let fuelPowerup = FuelPowerup.new();
+                    let frameCount = 0;
+                    let powerupSpawnCounter = 0;
+                    let lastPowerupLane = 0;
+                    
+                    do Screen.clearScreen();
+                    do road.draw();
+                    do player.draw();
+                    do gui.drawBar();
+                    
+                    do gameState.setState(1);  // Volver a PLAYING
+                }
+                
+                if (key = 129) {  // BackSpace para volver al menú
+                    // Limpiar objetos
+                    if (gameInitialized) {
+                        do player.dispose();
+                        do gui.dispose();
+                        do road.dispose();
+                        do enemyManager.dispose();
+                        do fuelPowerup.dispose();
+                        let gameInitialized = false;
+                    }
+                    
+                    do gameState.drawMenu();
+                    do gameState.setState(0);  // Volver a MENU
+                }
+            }
+        }
+        
+        // Limpiar memoria al salir
+        if (gameInitialized) {
+            do player.dispose();
+            do gui.dispose();
+            do road.dispose();
+            do enemyManager.dispose();
+            do fuelPowerup.dispose();
+        }
+        do gameState.dispose();
+        
+        return;
+    }
+}

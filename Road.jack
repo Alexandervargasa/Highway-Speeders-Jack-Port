@@ -1,0 +1,51 @@
+class Road {
+    field int scrollOffset;
+    field int lineSpacing;
+    
+    constructor Road new() {
+        let scrollOffset = 0;
+        let lineSpacing = 40;
+        return this;
+    }
+    
+    method void update(int playerSpeed) {
+        let scrollOffset = scrollOffset + playerSpeed;
+        if (scrollOffset > lineSpacing) {
+            let scrollOffset = 0;
+        }
+        return;
+    }
+    
+    method void draw() {
+        var int y, leftEdge, rightEdge, lineEnd;
+        
+        let leftEdge = 150;
+        let rightEdge = 370;
+        let y = scrollOffset;
+        
+        // Dibujar bordes de la carretera (solo hasta Y=235)
+        do Screen.setColor(true);
+        do Screen.drawLine(leftEdge, 0, leftEdge, 234);
+        do Screen.drawLine(rightEdge, 0, rightEdge, 234);
+        
+        // Dibujar líneas centrales discontinuas
+        while (y < 235) {  // Cambiado de 256 a 235
+            let lineEnd = y + 20;
+            
+            // Asegurar que lineEnd no se pase de 234
+            if (lineEnd > 234) {
+                let lineEnd = 234;
+            }
+            
+            do Screen.drawLine(leftEdge + 70, y, leftEdge + 70, lineEnd);
+            do Screen.drawLine(leftEdge + 140, y, leftEdge + 140, lineEnd);
+            let y = y + lineSpacing;
+        }
+        return;
+    }
+    
+    method void dispose() {
+       // do Memory.deAlloc(this);
+        return;
+    }
+}
