@@ -187,3 +187,4 @@ Este proyecto fue desarrollado como parte del curso de Organizacion de Computado
 **Highway Speeders** - Una experiencia de carreras clásica implementada desde los fundamentos de la computación
 
 ## Video de la sustentacion
+https://www.youtube.com/watch?v=3QRUQas3NCM
